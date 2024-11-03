@@ -1,0 +1,35 @@
+version: "3"
+services:
+  web:
+    ports:
+      - "3000:3000"
+    build:
+      context: ./web
+      dockerfile: "Dockerfile"
+    environment:
+      API_HOST: "http://api:4002"
+  api:
+    build:
+      context: ./api
+      dockerfile: "Dockerfile"
+    ports:
+      - "4002:4002"
+    environment:
+      PORT: "4002"
+      DBUSER: "postgres"
+      DB: "nodejs"
+      DBPASS: "postgres"
+      DBHOST: "db"
+      DBPORT: "5432"
+    depends_on:
+      - db
+    links:
+      - db
+  db:
+    image: "postgres:14"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "nodejs"

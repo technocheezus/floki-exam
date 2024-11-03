@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: your-api-image:latest
+        env:
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://tempo:4317"
+        ports:
+        - containerPort: 4002
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4002
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4002

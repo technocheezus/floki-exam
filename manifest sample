@@ -1,0 +1,162 @@
+# Project Structure
+.
+├── base
+│   ├── kustomization.yaml
+│   ├── api
+│   │   ├── deployment.yaml
+│   │   └── service.yaml
+│   ├── frontend
+│   │   ├── deployment.yaml
+│   │   └── service.yaml
+│   └── postgres
+│       ├── deployment.yaml
+│       ├── service.yaml
+│       └── pvc.yaml
+├── monitoring
+│   ├── kustomization.yaml
+│   ├── prometheus
+│   │   ├── values.yaml
+│   │   └── rules
+│   │       └── api-alerts.yaml
+│   ├── tempo
+│   │   └── values.yaml
+│   └── grafana
+│       ├── values.yaml
+│       └── dashboards
+│           └── kubernetes-metrics.json
+└── overlays
+    ├── dev
+    │   └── kustomization.yaml
+    └── prod
+        └── kustomization.yaml
+
+# base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - api/deployment.yaml
+  - api/service.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - postgres/deployment.yaml
+  - postgres/service.yaml
+  - postgres/pvc.yaml
+
+# base/api/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: your-api-image:latest
+        env:
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://tempo:4317"
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+
+# base/api/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: api
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+# monitoring/prometheus/values.yaml
+alertmanager:
+  config:
+    receivers:
+    - name: 'email'
+      email_configs:
+      - to: 'your-email@example.com'
+        from: 'alertmanager@example.com'
+        smarthost: 'smtp.example.com:587'
+    route:
+      receiver: 'email'
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+# monitoring/prometheus/rules/api-alerts.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: api-alerts
+spec:
+  groups:
+  - name: api
+    rules:
+    - alert: APIHighErrorRate
+      expr: |
+        rate(http_server_requests_seconds_count{status=~"5.*"}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: High API error rate
+        description: API error rate is above 10% for the last 5 minutes
+
+# monitoring/tempo/values.yaml
+tempo:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+
+# monitoring/grafana/dashboards/kubernetes-metrics.json
+{
+  "title": "Kubernetes Metrics",
+  "panels": [
+    {
+      "title": "CPU Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\"}[5m])) by (pod)"
+        }
+      ]
+    },
+    {
+      "title": "Memory Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{container!=\"\"}) by (pod)"
+        }
+      ]
+    }
+  ]
+}

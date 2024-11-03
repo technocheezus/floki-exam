@@ -1,0 +1,18 @@
+# monitoring/prometheus/rules/api-alerts.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: api-alerts
+spec:
+  groups:
+  - name: api
+    rules:
+    - alert: APIHighErrorRate
+      expr: |
+        rate(http_server_requests_seconds_count{status=~"5.*"}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: High API error rate
+        description: API error rate is above 10% for the last 5 minutes
