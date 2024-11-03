@@ -2,50 +2,51 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
+  name: db
   labels:
-    app: api
+    app: db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: db
   template:
     metadata:
       labels:
-        app: api
+        app: db
     spec:
       containers:
-      - name: api
-        image: api:latest  # Replace with your actual image
+      - name: db
+        image: postgres:14
         ports:
-        - containerPort: 4002
+        - containerPort: 5432
         env:
-        - name: PORT
-          value: "4002"
-        - name: DBUSER
+        - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: username
-        - name: DBPASS
+        - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: password
-        - name: DB
+        - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
               name: app-config
               key: database-name
-        - name: DBHOST
-          value: "db"
-        - name: DBPORT
-          value: "5432"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
         resources:
           requests:
-            memory: "128Mi"
+            memory: "256Mi"
             cpu: "250m"
           limits:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "500m"
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
