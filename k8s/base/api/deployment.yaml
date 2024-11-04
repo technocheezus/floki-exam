@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: api:latest  # Replace with your actual image
+        image: marcpar/floki-api:latest
         ports:
         - containerPort: 4002
         env:
