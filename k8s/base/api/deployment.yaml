@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
+  name: api-service
   labels:
-    app: api
+    app: api-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: api-service
   template:
     metadata:
       labels:
-        app: api
+        app: api-service
     spec:
       containers:
-      - name: api
+      - name: api-service
         image: marcpar/floki-api:latest
         ports:
         - containerPort: 4002

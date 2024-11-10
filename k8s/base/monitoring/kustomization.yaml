@@ -1,0 +1,14 @@
+resources:
+  - github.com/prometheus-operator/kube-prometheus//manifests/setup?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/prometheus?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/node-exporter?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/grafana?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/kube-state-metrics?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/prometheus-adapter?ref=release-0.9
+  - github.com/prometheus-operator/kube-prometheus//manifests/alertmanager?ref=release-0.9
+  # Tempo components
+  - github.com/grafana/helm-charts//charts/tempo/crds?ref=v0.1.0
+  - github.com/grafana/helm-charts//charts/tempo/templates?ref=v0.1.0
+
+patchesStrategicMerge:
+  - prometheus-patch.yaml
