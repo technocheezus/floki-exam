@@ -3,3 +3,4 @@ resources:
 - pvc.yaml
 - secrets.yaml
 - service.yaml
+- app-config.yaml
